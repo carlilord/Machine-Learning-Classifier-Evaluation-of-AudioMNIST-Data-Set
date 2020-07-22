@@ -38,7 +38,7 @@ def merge_data(path, name, fileName):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', '-src', default=os.path.join(os.getcwd(), "../Data/processed_data"), help="Path to folder containing processed_data.")
+    parser.add_argument('--source', '-src', default=os.path.join(os.getcwd(), "../AudioMNIST/preprocessed_data"), help="Path to folder containing processed_data.")
     args = parser.parse_args()
     
     if not os.path.exists('merged'):
