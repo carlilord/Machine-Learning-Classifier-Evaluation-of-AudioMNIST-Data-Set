@@ -51,43 +51,81 @@ def return_generators(path):
     
     return (train_generator,val_generator,test_generator)
 
-# Train (18000, 51529)
-# Val   (6000, 51529)
-# Test  (6000, 51529)
+def plot_confusion_matrix(cm,
+                          target_names=[0,1,2,3,4,5,6,7,8,9],
+                          title='Confusion matrix',
+                          cmap=None,
+                          normalize=True):
+    """
+    given a sklearn confusion matrix (cm), make a nice plot
 
-class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, path, indices, batch_size=32, num_classes=None, shuffle=False):
-        self.batch_size = batch_size
-        self.file = h5py.File(path, 'r')
-        self.indices = indices
-        self.num_classes = num_classes
-        self.shuffle = shuffle
-        self.on_epoch_end()
+    Arguments
+    ---------
+    cm:           confusion matrix from sklearn.metrics.confusion_matrix
 
-    def __len__(self):
-        return (len(self.indices) // self.batch_size)
+    target_names: given classification classes such as [0, 1, 2]
+                  the class names, for example: ['high', 'medium', 'low']
 
-    def __getitem__(self, index):
-        index = self.index[index * self.batch_size:(index + 1) * self.batch_size]
-        batch = [self.indices[k] for k in index]
-        
-        X, y = self.__get_data(batch)
-        return X, y
+    title:        the text to display at the top of the matrix
 
-    def on_epoch_end(self):
-        self.index = np.arange(len(self.indices))
-        if self.shuffle == True:
-            np.random.shuffle(self.index)
+    cmap:         the gradient of the values displayed from matplotlib.pyplot.cm
+                  see http://matplotlib.org/examples/color/colormaps_reference.html
+                  plt.get_cmap('jet') or plt.cm.Blues
 
-    def __get_data(self, batch):
-        #X = (self.file["data"])[batch,...]
-        #y = (self.file['labels'])[batch,...]
-        X = self.file["data",0:31,...]
-        print(X.shape)
-        y = self.file['labels',0:31,...]
-        X = tf.transpose(X, [0, 2, 3, 1])
-        #for i, id in enumerate(batch):
-        #    X[i,] = (self.file["data"])[i,...]
-        #    y[i] = (self.file['labels'])[i,...]
+    normalize:    If False, plot the raw numbers
+                  If True, plot the proportions
 
-        return X, y
+    Usage
+    -----
+    plot_confusion_matrix(cm           = cm,                  # confusion matrix created by
+                                                              # sklearn.metrics.confusion_matrix
+                          normalize    = True,                # show proportions
+                          target_names = y_labels_vals,       # list of names of the classes
+                          title        = best_estimator_name) # title of graph
+
+    Citiation
+    ---------
+    http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
+
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib as mp
+    import itertools
+    mp.rcParams.update({'font.size': 22})
+    accuracy = np.trace(cm) / float(np.sum(cm))
+    misclass = 1 - accuracy
+
+    if cmap is None:
+        cmap = plt.get_cmap('Blues')
+
+    plt.figure(figsize=(11, 11))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+
+    if target_names is not None:
+        tick_marks = np.arange(len(target_names))
+        plt.xticks(tick_marks, target_names, rotation=45)
+        plt.yticks(tick_marks, target_names)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+
+    thresh = cm.max() / 1.5 if normalize else cm.max() / 2
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        if normalize:
+            plt.text(j, i, "{0}".format(int(cm[i, j]*100)),
+                     horizontalalignment="center",
+                     color="black" if cm[i, j] > thresh else "white")
+        else:
+            plt.text(j, i, "{:,}".format(cm[i, j]),
+                     horizontalalignment="center",
+                     color="black" if cm[i, j] > thresh else "white")
+
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label\naccuracy={0}%; misclass={1}%'.format(accuracy*100, misclass*100))
+    plt.show()
